@@ -58,3 +58,4 @@ with a sleep of 3 seconds. you can change this with:
 `$MySQLiHelper->setAutoReconnect(false)`  
 
 
+....
