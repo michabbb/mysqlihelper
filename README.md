@@ -22,7 +22,7 @@ foreach ($newQuery->result as $data) {
 ```
 the defaults are:
 
-* chareste: utf8
+* charset: utf8
 * port: 3306
 * trace: true 
 
