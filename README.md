@@ -1,3 +1,9 @@
+This is a super simple basic wrapper for mysqli, with some extras:
+
+ - lazy connection
+ - auto-reconnect
+ - named-parameters
+
 **Example usage:**
 
 ```php
