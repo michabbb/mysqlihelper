@@ -2,7 +2,7 @@
     "name": "macropage/mysqlihelper",
     "description": "A basic helper to handle mysqli connections and queries with lazy connection and auto-reconnect",
     "type": "library",
-    "license": "GNU General Public License v3.0",
+    "license": "AGPL-3.0-or-later",
     "authors": [
         {
             "name": "Michael Bladowski",
