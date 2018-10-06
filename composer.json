@@ -1,0 +1,21 @@
+{
+    "name": "macropage/mysqlihelper",
+    "description": "A basic helper to handle mysqli connections and queries with lazy connection and auto-reconnect",
+    "type": "library",
+    "license": "GNU General Public License v3.0",
+    "authors": [
+        {
+            "name": "Michael Bladowski",
+            "email": "mbladowski@macropage.de"
+        }
+    ],
+    "require": {
+        "php": ">=5.6",
+        "ext-mysqli": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "macropage\\MySQLiHelper\\": "."
+        }
+    }
+}
