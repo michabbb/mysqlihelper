@@ -1,4 +1,4 @@
-**Exmaple usage:**
+**Example usage:**
 
 ```php
 <?php
@@ -15,30 +15,31 @@ $MySQLiHelper = new MySQLiBase(
 		'db'      => 'xxxxx',
 	]
 );
-
+$newQuery = $MySQLiHelper->query('select * from table limit 0,10');
+foreach ($newQuery->result as $data) {
+	echo $data['table_field']."\n";
+}
+```
 the defaults are:
 
 * chareste: utf8
 * port: 3306
 * trace: true 
 
-$newQuery = $MySQLiHelper->query('select * from table limit 0,10');
-foreach ($newQuery->result as $data) {
-	echo $data['table_field']."\n";
-}
-```
 
-**The best:** this class supports regular **AND** _named parameters_ - thanks to PEAR:MDB2 where i got the code from :-)
+**The best:** this class supports regular **AND** named _parameters_ - thanks to PEAR:MDB2 where i got the code from :-)
 
 so both works:
 
-`$MySQLiHelper->query('select * from table where a=? and b=?',[1,1]);`  
+```php
+$MySQLiHelper->query('select * from table where a=? and b=?',[1,1]);
+```
   
 **IS THE SAME LIKE**
   
-`$MySQLiHelper->query('select * from table where a=:my_placeholder and b=:my_placehoöder',['my_placeholder' => 1]);`  
-  
-  
+```php
+$MySQLiHelper->query('select * from table where a=:my_placeholder and b=:my_placehoöder',['my_placeholder' => 1]);
+```
   
 You can call `$MySQLiHelper->connect()` manually, but the class uses lazy connection, so as soon as the first query is done,
 a connection to the mysql server will be established.
