@@ -19,6 +19,8 @@ $MySQLiHelper = new MySQLiBase(
 		'user'    => 'xxxxxx',
 		'pwd'     => 'xxxxxx',
 		'db'      => 'xxxxx',
+		'charset' => 'utf8',
+		'trace'   => true
 	]
 );
 $newQuery = $MySQLiHelper->query('select * from table limit 0,10');
@@ -56,6 +58,7 @@ with a sleep of 3 seconds. you can change this with:
 `$MySQLiHelper->setAutoReconnectMaxTry(x)`  
 `$MySQLiHelper->setAutoReconnectSleep(x)`  
 `$MySQLiHelper->setAutoReconnect(false)`  
+`$MySQLiHelper->setLowerTableFields(false)`
 
 
 ....
