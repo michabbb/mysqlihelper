@@ -24,6 +24,7 @@ class MySQLiBase {
 	private $autoReconnectCount  = 0;
 	private $autoReconnectSleep  = 3;
 	private $traceEnabled        = true;
+	private $lowerTableFields    = true;
 
 	public function __construct($connectionParams) {
 		if (!array_key_exists('port', $connectionParams)) {
@@ -177,6 +178,9 @@ class MySQLiBase {
 					$ResponseObj->numrows++;
 					$ResponseObj->result[$i] = [];
 					foreach ($fields as $k => $v) {
+						if ($this->lowerTableFields) {
+							$k = strtolower($k);
+						}
 						$ResponseObj->result[$i][$k] = $v;
 					}
 					$i++;
@@ -452,6 +456,13 @@ class MySQLiBase {
 	 */
 	public function setAutoReconnectSleep($autoReconnectSleep) {
 		$this->autoReconnectSleep = $autoReconnectSleep;
+	}
+
+	/**
+	 * @param bool $lowerTableFields
+	 */
+	public function setLowerTableFields($lowerTableFields) {
+		$this->lowerTableFields = $lowerTableFields;
 	}
 
 }
