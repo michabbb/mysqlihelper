@@ -199,9 +199,11 @@ class MySQLiBase {
 				}
 			} else {
 				$result = $stmt->get_result();
-				while($row = $result->fetch_assoc()) {
-					$ResponseObj->numrows++;
-					$ResponseObj->result[] = $this->lowerTableFields ? array_change_key_case($row, CASE_LOWER) : $row;
+				if ($result!==false) {
+					while ($row = $result->fetch_assoc()) {
+						$ResponseObj->numrows++;
+						$ResponseObj->result[] = $this->lowerTableFields ? array_change_key_case($row, CASE_LOWER) : $row;
+					}
 				}
 			}
 
