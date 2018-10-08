@@ -108,15 +108,11 @@ class MySQLiBase {
 
 		if (count($params)) {
 			$parsedResult = $this->get_placeholders($sql);
-			if (!$parsedResult['state']) {
-				$ResponseObj->error = $parsedResult['error'];
-
-				return $ResponseObj;
-			}
 			$sql              = $parsedResult['query'];
 			$ResponseObj->sql = $sql;
 			// replace named parameters
 			if (array_key_exists('positions', $parsedResult) && count($parsedResult['positions'])) {
+
 				foreach ($parsedResult['positions'] as $position => $value) {
 					if (array_key_exists($position, $params)) {
 						$paramType                  = self::getParamType($params[$position]);
@@ -157,7 +153,7 @@ class MySQLiBase {
 			return $ResponseObj;
 		}
 
-		if (count($params)) {
+		if (count($paramsWithTypes)) {
 			\call_user_func_array([$stmt, 'bind_param'], $bind_names);
 		}
 
@@ -171,29 +167,40 @@ class MySQLiBase {
 			$ResponseObj->numrows       = 0;
 			$ResponseObj->affected_rows = ($stmt->affected_rows > 0) ? $stmt->affected_rows : 0;
 
-			$meta   = $stmt->result_metadata();
-			$fields = [];
+			if ($paramsWithTypes) {
 
-			if ($meta) {
-				while ($field = $meta->fetch_field()) {
-					$var          = $field->name;
-					$$var         = null;
-					$fields[$var] = &$$var;
-				}
+				$meta   = $stmt->result_metadata();
+				$fields = [];
 
-				\call_user_func_array([$stmt, 'bind_result'], $fields);
+				if ($meta) {
 
-				$i = 0;
-				while ($stmt->fetch()) {
-					$ResponseObj->numrows++;
-					$ResponseObj->result[$i] = [];
-					foreach ($fields as $k => $v) {
-						if ($this->lowerTableFields) {
-							$k = strtolower($k);
-						}
-						$ResponseObj->result[$i][$k] = $v;
+					while ($field = $meta->fetch_field()) {
+						$var          = $field->name;
+						$$var         = null;
+						$fields[$var] = &$$var;
 					}
-					$i++;
+
+					if (count($paramsWithTypes)) {
+						\call_user_func_array([$stmt, 'bind_result'], $fields);
+					}
+
+					$i = 0;
+					while ($stmt->fetch()) {
+						$ResponseObj->numrows++;
+						$ResponseObj->result[$i] = [];
+						foreach ($fields as $k => $v) {
+							if ($this->lowerTableFields) {
+								$k = strtolower($k);
+							}
+							$ResponseObj->result[$i][$k] = $v;
+						}
+						$i++;
+					}
+				}
+			} else {
+				$result = $stmt->get_result();
+				while($row = $result->fetch_assoc()) {
+					$ResponseObj->result[] = $this->lowerTableFields ? array_change_key_case($row, CASE_LOWER) : $row;
 				}
 			}
 
