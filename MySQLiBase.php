@@ -444,7 +444,9 @@ class MySQLiBase {
 	 *
 	 */
 	public function disconnect() {
-		$this->link->close();
+		if ($this->link) {
+			$this->link->close();
+		}
 	}
 
 	/**
