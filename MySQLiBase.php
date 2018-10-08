@@ -50,6 +50,7 @@ class MySQLiBase {
 	}
 
 	public function begin() {
+		$this->connectIfNotConnected();
 		$this->link->begin_transaction();
 	}
 
@@ -59,6 +60,16 @@ class MySQLiBase {
 
 	public function rollback() {
 		$this->link->rollback();
+	}
+
+	private function connectIfNotConnected() {
+		if (!$this->link) {
+			$conntect_status = $this->connect();
+			if (!$conntect_status->state) {
+				return $conntect_status;
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -78,12 +89,11 @@ class MySQLiBase {
 		}
 
 		// Lazy Connection
-		if (!$this->link) {
-			$conntect_status = $this->connect();
-			if (!$conntect_status->state) {
-				return $conntect_status;
-			}
+		$lazyConStatus = $this->connectIfNotConnected();
+		if ($lazyConStatus!==true) {
+			return $lazyConStatus;
 		}
+
 
 		$ResponseObj->sql           = $sql;
 		$ResponseObj->sql_original  = $sql;
