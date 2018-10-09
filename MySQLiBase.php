@@ -217,6 +217,7 @@ class MySQLiBase {
 			}
 
 			$stmt->free_result();
+			$stmt->close();
 		}
 
 		$ResponseObj->duration       = $this->traceEnabled ? (microtime(true) - $traceStart) : 0;
