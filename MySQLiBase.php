@@ -179,11 +179,11 @@ class MySQLiBase {
 					while ($field = $meta->fetch_field()) {
 						$var          = $field->name;
 						$$var         = null;
-						if (array_key_exists($var,$dupcounter)) {
-							$var = $var.$dupcounter[$var];
+						if (array_key_exists($field->name,$dupcounter)) {
+							$var = $var.$dupcounter[$field->name];
 						}
 						$fields[$var] = &$$var;
-						$dupcounter[$var]++;
+						$dupcounter[$field->name]++;
 					}
 
 					if (count($paramsWithTypes)) {
