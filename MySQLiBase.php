@@ -174,10 +174,16 @@ class MySQLiBase {
 
 				if ($meta) {
 
+					$dupcounter = [];
+
 					while ($field = $meta->fetch_field()) {
 						$var          = $field->name;
 						$$var         = null;
+						if (array_key_exists($var,$dupcounter)) {
+							$var = $var.$dupcounter[$var];
+						}
 						$fields[$var] = &$$var;
+						$dupcounter[$var]++;
 					}
 
 					if (count($paramsWithTypes)) {
