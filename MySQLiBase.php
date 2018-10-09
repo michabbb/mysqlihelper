@@ -183,6 +183,9 @@ class MySQLiBase {
 							$var = $var.$dupcounter[$field->name];
 						}
 						$fields[$var] = &$$var;
+						if (!array_key_exists($field->name,$dupcounter)) {
+							$dupcounter[$field->name]=0;
+						}
 						$dupcounter[$field->name]++;
 					}
 
