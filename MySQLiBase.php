@@ -163,9 +163,10 @@ class MySQLiBase {
 			$ResponseObj->errorno = $stmt->errno;
 		} else {
 
-			$ResponseObj->state         = true;
-			$ResponseObj->numrows       = 0;
-			$ResponseObj->affected_rows = ($stmt->affected_rows > 0) ? $stmt->affected_rows : 0;
+			$ResponseObj->state          = true;
+			$ResponseObj->last_insert_id = $this->link->insert_id;
+			$ResponseObj->numrows        = 0;
+			$ResponseObj->affected_rows  = ($stmt->affected_rows > 0) ? $stmt->affected_rows : 0;
 
 			if ($paramsWithTypes) {
 
@@ -221,7 +222,6 @@ class MySQLiBase {
 		}
 
 		$ResponseObj->duration       = $this->traceEnabled ? (microtime(true) - $traceStart) : 0;
-		$ResponseObj->last_insert_id = $this->link->insert_id;
 
 		return $ResponseObj;
 	}
