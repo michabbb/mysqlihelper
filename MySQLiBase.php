@@ -148,6 +148,9 @@ class MySQLiBase {
 		}
 
 		if (!$stmt) {
+
+			$ResponseObj->error    = mysqli_error($this->link);
+			$ResponseObj->errorno  = mysqli_errno($this->link);
 			$ResponseObj->duration = $this->traceEnabled ? (microtime(true) - $traceStart) : 0;
 
 			return $ResponseObj;
