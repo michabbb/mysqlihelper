@@ -2,6 +2,8 @@
 
 namespace macropage\MySQLiHelper;
 
+use mysqli_sql_exception;
+
 class MySQLiBase {
 
 
@@ -136,10 +138,16 @@ class MySQLiBase {
 			}
 		}
 
-		$stmt = $this->link->prepare($sql);
+		try {
+			$stmt = $this->link->prepare($sql);
+		} catch (mysqli_sql_exception  $e) {
+			$stmt = false;
+		} catch (\Exception $e) {
+			$stmt = false;
+		}
 
 		// Reconnect and redo prepare
-		if (!$stmt && $this->autoReconnect && $this->link->errno === 2006) {
+		if (!$stmt && $this->autoReconnect && $this->checkMysqlHasGoneAway($this->link->error)) {
 			$conntect_status = $this->connect();
 			if (!$conntect_status->state) {
 				return $conntect_status;
@@ -229,6 +237,24 @@ class MySQLiBase {
 		return $ResponseObj;
 	}
 
+	public function checkMysqlHasGoneAway($message) {
+		$mysql_messages = [
+			'server has gone away',
+			'no connection to the server',
+			'Lost connection',
+			'is dead or not enabled',
+			'Error while sending',
+			'decryption failed or bad record mac',
+			'SSL connection has been closed unexpectedly',
+		];
+		foreach ($mysql_messages as $mysql_message) {
+			if (stripos($message,$mysql_message)!==false) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * @return MySQLiResponse
 	 */
@@ -247,7 +273,7 @@ class MySQLiBase {
 		if ($this->link->connect_errno) {
 
 			if (
-				($this->link->errno === 2006 || $this->link->connect_errno === 2002)
+				($this->checkMysqlHasGoneAway($this->link->error) || $this->link->connect_errno === 2002)
 				&&
 				$this->autoReconnect === true
 			) {
@@ -266,7 +292,8 @@ class MySQLiBase {
 						$this->connectionParams['socket']
 					);
 					$this->autoReconnectCount++;
-					echo 'Warte ' . $this->autoReconnectSleep . ' sekunden dann probieren wir es nochmal....' . "\n";
+
+					// echo 'Warte ' . $this->autoReconnectSleep . ' sekunden dann probieren wir es nochmal....' . "\n";
 					sleep($this->autoReconnectSleep);
 				}
 			}
