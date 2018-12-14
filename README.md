@@ -61,4 +61,13 @@ with a sleep of 3 seconds. you can change this with:
 `$MySQLiHelper->setLowerTableFields(false)`
 
 
-....
+**You need a php developer?**  
+Contact me via  
+
+[XING](https://www.xing.com/profile/Michael_Bladowski/cv)  
+[LINKEDIN](https://www.linkedin.com/in/macropage/)  
+[TWITTER](https://twitter.com/michabbb)  
+[G+](https://plus.google.com/+MichaelBladowski)  
+
+
+
