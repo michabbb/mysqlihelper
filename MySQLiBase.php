@@ -179,53 +179,43 @@ class MySQLiBase {
 			$ResponseObj->numrows        = 0;
 			$ResponseObj->affected_rows  = ($stmt->affected_rows > 0) ? $stmt->affected_rows : 0;
 
-			if ($paramsWithTypes) {
+			$meta   = $stmt->result_metadata();
 
-				$meta   = $stmt->result_metadata();
-				$fields = [];
+			$fields = [];
 
-				if ($meta) {
+			if ($meta) {
 
-					$dupcounter = [];
+				$dupcounter = [];
 
-					while ($field = $meta->fetch_field()) {
-						$var          = $field->name;
-						$$var         = null;
-						if (array_key_exists($field->name,$dupcounter)) {
-							$var = $var.$dupcounter[$field->name];
-						}
-						$fields[$var] = &$$var;
-						if (!array_key_exists($field->name,$dupcounter)) {
-							$dupcounter[$field->name]=0;
-						}
-						$dupcounter[$field->name]++;
+				while ($field = $meta->fetch_field()) {
+					$var          = $field->name;
+					$$var         = null;
+					if (array_key_exists($field->name,$dupcounter)) {
+						$var = $var.$dupcounter[$field->name];
 					}
-
-					if (count($paramsWithTypes)) {
-						\call_user_func_array([$stmt, 'bind_result'], $fields);
+					$fields[$var] = &$$var;
+					if (!array_key_exists($field->name,$dupcounter)) {
+						$dupcounter[$field->name]=0;
 					}
+					$dupcounter[$field->name]++;
+				}
 
-					$i = 0;
-					while ($stmt->fetch()) {
-						$ResponseObj->numrows++;
-						$ResponseObj->result[$i] = [];
-						foreach ($fields as $k => $v) {
-							if ($this->lowerTableFields) {
-								$k = strtolower($k);
-							}
-							$ResponseObj->result[$i][$k] = $v;
+				\call_user_func_array([$stmt, 'bind_result'], $fields);
+
+				$i = 0;
+				while ($stmt->fetch()) {
+					$ResponseObj->numrows++;
+					$ResponseObj->result[$i] = [];
+					foreach ($fields as $k => $v) {
+						if ($this->lowerTableFields) {
+							$k = strtolower($k);
 						}
-						$i++;
+						$ResponseObj->result[$i][$k] = $v;
 					}
+					$i++;
 				}
 			} else {
-				$result = $stmt->get_result();
-				if ($result!==false) {
-					while ($row = $result->fetch_assoc()) {
-						$ResponseObj->numrows++;
-						$ResponseObj->result[] = $this->lowerTableFields ? array_change_key_case($row, CASE_LOWER) : $row;
-					}
-				}
+				$ResponseObj->error = 'result_metadata returned false';
 			}
 
 			$stmt->free_result();
