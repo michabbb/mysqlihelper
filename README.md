@@ -46,7 +46,7 @@ $MySQLiHelper->query('select * from table where a=? and b=?',[1,1]);
 **IS THE SAME LIKE**
   
 ```php
-$MySQLiHelper->query('select * from table where a=:my_placeholder and b=:my_placehoöder',['my_placeholder' => 1]);
+$MySQLiHelper->query('select * from table where a=:my_placeholder and b=:my_placeholder',['my_placeholder' => 1]);
 ```
   
 You can call `$MySQLiHelper->connect()` manually, but the class uses lazy connection, so as soon as the first query is done,
