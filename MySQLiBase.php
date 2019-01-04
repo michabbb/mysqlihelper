@@ -215,7 +215,14 @@ class MySQLiBase {
 					$i++;
 				}
 			} else {
-				$ResponseObj->error = 'result_metadata returned false';
+				/**
+				 * @see https://secure.php.net/manual/en/mysqli-stmt.result-metadata.php#97338
+				 */
+				preg_match('/^\s?(insert|update|delete|alter|drop|rename|modify|truncate)\s/i', $sql, $matches, PREG_OFFSET_CAPTURE, 0);
+				if (!count($matches)) {
+					$ResponseObj->state = false;
+					$ResponseObj->error = 'result_metadata returned false';
+				}
 			}
 
 			$stmt->free_result();
