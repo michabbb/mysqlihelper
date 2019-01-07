@@ -69,5 +69,4 @@ Contact me via
 [TWITTER](https://twitter.com/michabbb)  
 [G+](https://plus.google.com/+MichaelBladowski)  
 
-
-
+....
