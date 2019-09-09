@@ -2,7 +2,10 @@
 
 namespace macropage\MySQLiHelper;
 
+use Exception;
+use mysqli;
 use mysqli_sql_exception;
+use function call_user_func_array;
 
 class MySQLiBase {
 
@@ -17,7 +20,7 @@ class MySQLiBase {
 		'bindname_format' => '(?:\d+)|(?:[a-zA-Z][a-zA-Z0-9_]*)',
 	];
 	/**
-	 * @var \mysqli
+	 * @var mysqli
 	 */
 	private $link;
 	private $connectionParams;
@@ -96,6 +99,16 @@ class MySQLiBase {
 			return $lazyConStatus;
 		}
 
+		$isSetOrCallQuery = false;
+		$isSetCallQuery   = false;
+
+        preg_match('/^\s?(SET|CALL)\s/i', $sql, $matches, PREG_OFFSET_CAPTURE);
+        if (count($matches)) {
+            $isSetOrCallQuery = true;
+            if (strtolower($matches[1][0]) === 'set') {
+				$isSetCallQuery = true;
+			}
+        }
 
 		$ResponseObj->sql           = $sql;
 		$ResponseObj->sql_original  = $sql;
@@ -139,10 +152,13 @@ class MySQLiBase {
 		}
 
 		try {
-			$stmt = $this->link->prepare($sql);
+		    $stmt = $this->prepareOrQuery($isSetOrCallQuery,$sql);
+            if (is_bool($stmt) && $isSetCallQuery) {
+                return $this->returnResult($stmt,$ResponseObj,$traceStart);
+            }
 		} catch (mysqli_sql_exception  $e) {
 			$stmt = false;
-		} catch (\Exception $e) {
+		} catch (Exception $e) {
 			$stmt = false;
 		}
 
@@ -152,24 +168,28 @@ class MySQLiBase {
 			if (!$conntect_status->state) {
 				return $conntect_status;
 			}
-			$stmt = $this->link->prepare($sql);
+
+            $stmt = $this->prepareOrQuery($isSetOrCallQuery,$sql);
+            if (is_bool($stmt) && $isSetCallQuery) {
+				return $this->returnResult($stmt,$ResponseObj,$traceStart);
+            }
 		}
 
 		if (!$stmt) {
-
-			$ResponseObj->error    = mysqli_error($this->link);
-			$ResponseObj->errorno  = mysqli_errno($this->link);
-			$ResponseObj->duration = $this->traceEnabled ? (microtime(true) - $traceStart) : 0;
-
-			return $ResponseObj;
+		    return $this->returnResult(false,$ResponseObj,$traceStart);
 		}
 
 		if (count($paramsWithTypes)) {
-			\call_user_func_array([$stmt, 'bind_param'], $bind_names);
+			call_user_func_array([$stmt, 'bind_param'], $bind_names);
 		}
 
+		$failed = false;
 
-		if (!$stmt->execute()) {
+        if (!$isSetOrCallQuery && !$stmt->execute()) {
+			$failed = true;
+		}
+
+		if ($failed) {
 			$ResponseObj->error   = $stmt->error;
 			$ResponseObj->errorno = $stmt->errno;
 		} else {
@@ -179,7 +199,26 @@ class MySQLiBase {
 			$ResponseObj->numrows        = 0;
 			$ResponseObj->affected_rows  = ($stmt->affected_rows > 0) ? $stmt->affected_rows : 0;
 
-			$meta   = $stmt->result_metadata();
+			if (method_exists($stmt,'result_metadata')) {
+                $meta = $stmt->result_metadata();
+            } elseif ($isSetOrCallQuery) {
+			    $i = 0;
+			    while ($row = $stmt->fetch_assoc()) {
+                    $ResponseObj->result[$i] = $row;
+                    $i++;
+                }
+                $ResponseObj->numrows  = $i;
+                $ResponseObj->duration = $this->traceEnabled ? (microtime(true) - $traceStart) : 0;
+                $stmt->close();
+                $this->freeResult();
+                return $ResponseObj;
+            } else {
+			    $ResponseObj->error = 'unknown type of query';
+			    $ResponseObj->state = false;
+			    $stmt->close();
+			    $this->freeResult();
+			    return $ResponseObj;
+            }
 
 			$fields = [];
 
@@ -191,7 +230,7 @@ class MySQLiBase {
 					$var          = $field->name;
 					$$var         = null;
 					if (array_key_exists($field->name,$dupcounter)) {
-						$var = $var.$dupcounter[$field->name];
+						$var .= $dupcounter[$field->name];
 					}
 					$fields[$var] = &$$var;
 					if (!array_key_exists($field->name,$dupcounter)) {
@@ -200,7 +239,7 @@ class MySQLiBase {
 					$dupcounter[$field->name]++;
 				}
 
-				\call_user_func_array([$stmt, 'bind_result'], $fields);
+				call_user_func_array([$stmt, 'bind_result'], $fields);
 
 				$i = 0;
 				while ($stmt->fetch()) {
@@ -218,7 +257,7 @@ class MySQLiBase {
 				/**
 				 * @see https://secure.php.net/manual/en/mysqli-stmt.result-metadata.php#97338
 				 */
-				preg_match('/^\s?(insert|update|delete|alter|drop|rename|modify|truncate|replace|create)\s/i', $sql, $matches, PREG_OFFSET_CAPTURE, 0);
+				preg_match('/^\s?(insert|update|delete|alter|drop|rename|modify|truncate|replace|create)\s/i', $sql, $matches, PREG_OFFSET_CAPTURE);
 				if (!count($matches)) {
 					$ResponseObj->state = false;
 					$ResponseObj->error = 'result_metadata returned false';
@@ -233,6 +272,23 @@ class MySQLiBase {
 
 		return $ResponseObj;
 	}
+
+	private function returnResult($stmt,$ResponseObj,$traceStart) {
+		if (!$stmt) {
+			$ResponseObj->error    = mysqli_error($this->link);
+			$ResponseObj->errorno  = mysqli_errno($this->link);
+		}
+		$ResponseObj->duration = $this->traceEnabled ? (microtime(true) - $traceStart) : 0;
+		$ResponseObj->state    = $stmt;
+		return $ResponseObj;
+    }
+
+	private function prepareOrQuery($isSetOrCallQuery, $sql) {
+        if ($isSetOrCallQuery) {
+            return $this->link->query($sql);
+        }
+        return $this->link->prepare($sql);
+    }
 
 	public function checkMysqlHasGoneAway($message) {
 		$mysql_messages = [
@@ -256,7 +312,7 @@ class MySQLiBase {
 	 * @return MySQLiResponse
 	 */
 	public function connect() {
-		$this->link = new \mysqli(
+		$this->link = new mysqli(
 			$this->connectionParams['host'],
 			$this->connectionParams['user'],
 			$this->connectionParams['pwd'],
@@ -270,9 +326,9 @@ class MySQLiBase {
 		if ($this->link->connect_errno) {
 
 			if (
-				($this->checkMysqlHasGoneAway($this->link->error) || $this->link->connect_errno === 2002)
-				&&
 				$this->autoReconnect === true
+				&&
+				($this->checkMysqlHasGoneAway($this->link->error) || $this->link->connect_errno === 2002)
 			) {
 				while ($this->autoReconnectCount <= $this->autoReconnectMaxTry) {
 
@@ -280,7 +336,7 @@ class MySQLiBase {
 //						$this->connectionParams['host'] = 'mysql';
 //					}
 
-					$this->link = new \mysqli(
+					$this->link = new mysqli(
 						$this->connectionParams['host'],
 						$this->connectionParams['user'],
 						$this->connectionParams['pwd'],
@@ -523,5 +579,13 @@ class MySQLiBase {
 	public function setLowerTableFields($lowerTableFields) {
 		$this->lowerTableFields = $lowerTableFields;
 	}
+
+    private function freeResult() {
+        do {
+            if ($res = $this->link->store_result()) {
+                $res->free();
+            }
+        } while ($this->link->more_results() && $this->link->next_result());
+    }
 
 }
