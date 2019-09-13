@@ -197,7 +197,7 @@ class MySQLiBase {
 			$ResponseObj->state          = true;
 			$ResponseObj->last_insert_id = $this->link->insert_id;
 			$ResponseObj->numrows        = 0;
-			$ResponseObj->affected_rows  = ($stmt->affected_rows > 0) ? $stmt->affected_rows : 0;
+			$ResponseObj->affected_rows  = (property_exists($stmt,'affected_rows') && $stmt->affected_rows > 0) ? $stmt->affected_rows : 0;
 
 			if (method_exists($stmt,'result_metadata')) {
                 $meta = $stmt->result_metadata();
