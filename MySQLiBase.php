@@ -257,7 +257,7 @@ class MySQLiBase {
 				/**
 				 * @see https://secure.php.net/manual/en/mysqli-stmt.result-metadata.php#97338
 				 */
-				preg_match('/^\s?(insert|update|delete|alter|drop|rename|modify|truncate|replace|create)\s/i', $sql, $matches, PREG_OFFSET_CAPTURE);
+				preg_match('/^\s?(insert|update|delete|alter|drop|rename|modify|truncate|replace|create|kill)\s/i', $sql, $matches, PREG_OFFSET_CAPTURE);
 				if (!count($matches)) {
 					$ResponseObj->state = false;
 					$ResponseObj->error = 'result_metadata returned false';
