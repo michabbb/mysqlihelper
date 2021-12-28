@@ -239,7 +239,7 @@ class MySQLiBase {
 					$dupcounter[$field->name]++;
 				}
 
-				call_user_func_array([$stmt, 'bind_result'], $fields);
+				call_user_func_array([$stmt, 'bind_result'], array_values($fields));
 
 				$i = 0;
 				while ($stmt->fetch()) {
