@@ -100,14 +100,13 @@ class MySQLiBase {
 		}
 
 		$isSetOrCallQuery = false;
-		$isSetCallQuery   = false;
 
-        preg_match('/^\s?(SET|CALL)\s/i', $sql, $matches, PREG_OFFSET_CAPTURE);
+        $regex_trigger = '.*TRIGGER.*(BEFORE|AFTER)\s*(INSERT|UPDATE|DELETE)';
+
+        preg_match('/^\s?(SET|CALL|'.$regex_trigger.')\s/is', $sql, $matches, PREG_OFFSET_CAPTURE);
+
         if (count($matches)) {
             $isSetOrCallQuery = true;
-            if (strtolower($matches[1][0]) === 'set') {
-				$isSetCallQuery = true;
-			}
         }
 
 		$ResponseObj->sql           = $sql;
@@ -153,7 +152,7 @@ class MySQLiBase {
 
 		try {
 		    $stmt = $this->prepareOrQuery($isSetOrCallQuery,$sql);
-            if (is_bool($stmt) && $isSetCallQuery) {
+            if (is_bool($stmt)) {
                 return $this->returnResult($stmt,$ResponseObj,$traceStart);
             }
 		} catch (mysqli_sql_exception  $e) {
@@ -170,7 +169,7 @@ class MySQLiBase {
 			}
 
             $stmt = $this->prepareOrQuery($isSetOrCallQuery,$sql);
-            if (is_bool($stmt) && $isSetCallQuery) {
+            if (is_bool($stmt)) {
 				return $this->returnResult($stmt,$ResponseObj,$traceStart);
             }
 		}
